@@ -5,3 +5,13 @@
   text-align: center;
   color: #2c3e50;
 }
+
+.input-text {
+  padding: 15px;
+  margin: 15px;
+}
+
+.btn {
+  padding: 15px;
+  margin: 15px;
+}

@@ -1,5 +1,9 @@
 <template>
-  <div class="board">
+  <div class="add-board">
+    <input class="input-text" type="text" v-model="newColumnName" />
+    <button class="btn" @click="addNewColumn">+ Add a new column</button>
+  </div>
+  <div class="board" :style="{ gridTemplateColumns: `repeat(${columnsNumber}, 1fr)` }">
     <Column
       v-for="column in columns"
       :key="column.id"
@@ -19,7 +23,11 @@
 import Column from "@/components/DragAndDrop/Column.vue";
 import Card from "@/components/DragAndDrop/Card.vue";
 
-import { ref } from "vue";
+import { ref, computed } from "vue";
+
+const columnsNumber = computed(() => Object.keys(columns.value).length);
+
+let newColumnName = ref("");
 
 const columns = ref([
   {
@@ -81,9 +89,33 @@ const dropEvent = ({ event, id }) => {
     return filteredCard;
   });
 };
+
+const addNewColumn = () => {
+  const lastIdOfColumn = Object.keys(columns.value).length;
+  if (!!newColumnName.value.length) {
+    let title = newColumnName.value;
+    columns.value.push({
+      id: lastIdOfColumn + 1,
+      title,
+    });
+    newColumnName.value = "";
+  }
+};
 </script>
 
 <style scoped>
+.input-text {
+  padding: 5px;
+  margin: 15px 0 15px 15px;
+  border-radius: 5px;
+}
+
+.btn {
+  padding: 5px;
+  margin: 15px;
+  border-radius: 5px;
+}
+
 .board {
   margin: 60px 0;
   height: calc(100vh - 120px);
