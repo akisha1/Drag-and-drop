@@ -1,15 +1,13 @@
 <template>
-  <div class="add-board">
-    <input class="input-text" type="text" v-model="newColumnName" />
-    <button class="btn" @click="addNewColumn">+ Add a new column</button>
-  </div>
+  <AddColumn @setNewColumnAddingEmit="addNewColumn" />
   <div class="board" :style="{ gridTemplateColumns: `repeat(${columnsNumber}, 1fr)` }">
     <Column
       v-for="column in columns"
       :key="column.id"
       :id="column.id"
       :title="column.title"
-      @setDropEmit="dropEvent">
+      @setDropEmit="dropEvent"
+      @setDragsEmitFromColumn="dragEvent">
       <Card
         v-for="card in cards.filter((filteredCard) => filteredCard.columnId === column.id)"
         :key="card.id"
@@ -20,107 +18,68 @@
 </template>
 
 <script setup>
+import AddColumn from "@/components/DragAndDrop/AddColumn.vue";
 import Column from "@/components/DragAndDrop/Column.vue";
 import Card from "@/components/DragAndDrop/Card.vue";
+import { startColumns, startCards } from "@/common/boardData.js";
+import { ref, computed, onBeforeMount } from "vue";
 
-import { ref, computed } from "vue";
+onBeforeMount(() => {
+  columns.value = startColumns;
+  cards.value = startCards;
+});
+
+const columns = ref([]);
+
+const cards = ref([]);
 
 const columnsNumber = computed(() => Object.keys(columns.value).length);
 
-let newColumnName = ref("");
-
-const columns = ref([
-  {
-    id: 0,
-    title: "В очереди",
-  },
-  {
-    id: 2,
-    title: "В работе",
-  },
-  {
-    id: 3,
-    title: "Сделано",
-  },
-]);
-
-const cards = ref([
-  {
-    id: 1,
-    title: "Таск №1",
-    columnId: 0,
-  },
-  {
-    id: 2,
-    title: "Таск №2",
-    columnId: 0,
-  },
-  {
-    id: 3,
-    title: "Таск №3",
-    columnId: 0,
-  },
-  {
-    id: 4,
-    title: "Таск №4",
-    columnId: 2,
-  },
-  {
-    id: 5,
-    title: "Таск №5",
-    columnId: 2,
-  },
-  {
-    id: 6,
-    title: "Таск №6",
-    columnId: 3,
-  },
-]);
-
-const dragEvent = ({ event, id }) => {
+const dragEvent = ({ event, id, isColumn }) => {
+  let setId = !!isColumn ? "columnId" : "cardId";
   event.dataTransfer.dropEffect = "move";
   event.dataTransfer.effectAllowed = "move";
-  event.dataTransfer.setData("cardId", id.toString());
+  event.dataTransfer.setData(setId, id.toString());
 };
+
 const dropEvent = ({ event, id }) => {
+  const columnId = parseInt(event.dataTransfer.getData("columnId"));
   const cardId = parseInt(event.dataTransfer.getData("cardId"));
+  if (!!columnId) {
+    let mutateCloneOfColumns = JSON.parse(JSON.stringify(columns.value));
+    const staticClone = JSON.parse(JSON.stringify(mutateCloneOfColumns));
+    mutateCloneOfColumns[id - 1] = mutateCloneOfColumns[columnId - 1];
+    mutateCloneOfColumns[columnId - 1] = staticClone[id - 1];
+    columns.value = mutateCloneOfColumns;
+    return;
+  }
   cards.value = cards.value.map((filteredCard) => {
     if (filteredCard.id == cardId) filteredCard.columnId = id;
     return filteredCard;
   });
 };
 
-const addNewColumn = () => {
-  const lastIdOfColumn = Object.keys(columns.value).length;
-  if (!!newColumnName.value.length) {
-    let title = newColumnName.value;
-    columns.value.push({
-      id: lastIdOfColumn + 1,
-      title,
-    });
-    newColumnName.value = "";
-  }
+const addNewColumn = (name) => {
+  const lastIdOfColumn = columnsNumber.value;
+  let title = name;
+  columns.value.push({
+    id: lastIdOfColumn + 1,
+    title,
+  });
 };
 </script>
 
-<style scoped>
-.input-text {
-  padding: 5px;
-  margin: 15px 0 15px 15px;
-  border-radius: 5px;
-}
+<style>
+@import "./assets/base.css";
 
-.btn {
-  padding: 5px;
-  margin: 15px;
-  border-radius: 5px;
+body {
+  background: rgba(235, 160, 95, 0.9);
 }
 
 .board {
-  margin: 60px 0;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 100px);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  column-gap: 20px;
+  column-gap: 30px;
 }
 </style>

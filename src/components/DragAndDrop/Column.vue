@@ -3,6 +3,8 @@
     :class="['column', { 'column-drag': isDrop }]"
     @dragover.prevent
     @dragenter.prevent
+    @dragstart="setDragsEmitFromColumn($event)"
+    draggable="true"
     @drop="setDropEmit($event)">
     <h2>{{ title }}</h2>
     <slot />
@@ -12,7 +14,7 @@
 <script setup>
 import { ref } from "vue";
 
-const emits = defineEmits(["setDropEmit"]);
+const emits = defineEmits(["setDropEmit", "setDragsEmitFromColumn"]);
 
 const isDrop = ref(false);
 
@@ -31,26 +33,35 @@ const setDropEmit = (event) => {
   isDrop.value = true;
   setTimeout(() => {
     isDrop.value = false;
-  }, "300");
+  }, "400");
   emits("setDropEmit", {
     event,
     id: props.id,
+  });
+};
+
+const setDragsEmitFromColumn = (event) => {
+  emits("setDragsEmitFromColumn", {
+    event,
+    id: props.id,
+    isColumn: true,
   });
 };
 </script>
 
 <style scoped>
 .column {
+  cursor: pointer;
   padding: 15px;
   border-radius: 5px;
-  background-color: rgb(193, 193, 193);
+  background-color: #ebecf0;
   margin-bottom: 10px;
 }
 .column h4 {
   color: white;
 }
 .column-drag {
-  transition: background-color 0.3s ease-out;
-  background-color: rgb(144, 141, 141);
+  transition: background-color 0.4s ease-out;
+  background-color: rgb(225, 223, 223);
 }
 </style>
